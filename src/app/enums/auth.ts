@@ -30,7 +30,8 @@ export enum WEIGHTTYPE {
 
 export enum USER_ROLE {
     ADMIN = "ADMIN",
-    USER = "USER"
+    USER = "USER",
+    EMPLOYER = "EMPLOYER"
 }
 
 export enum DIFFICULTY {

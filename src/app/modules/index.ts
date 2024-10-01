@@ -5,6 +5,7 @@ import adminAuthRouter from "./admin/auth/routes/v1/index"
 import userDetailRouter from "./userDetails/routes/v1/index"
 import userRouter from "./user/routes/v1/index";
 import chatRouter from "./chat/routes/v1/index";
+import cors from "cors";
 
 import express, { Request, Response , Application } from "express";
 import { API_CONSTANTS } from "../constants";
@@ -14,6 +15,7 @@ export class RegisterRoutes {
         this.regitserRoutes(app);
     }
     regitserRoutes(app: Application) {
+        app.use(cors({ origin: "*" }));
         app.use(express.json()); // For parsing application/json
         app.use(express.urlencoded({ extended: true }));
     app.use(`${API_CONSTANTS.ROOT}`, [masterRouter,authRouter,adminAuthRouter,userDetailRouter,userRouter,chatRouter]);

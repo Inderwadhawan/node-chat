@@ -1,6 +1,7 @@
 import { Document, ObjectId, Schema,Types } from 'mongoose';
 
 export interface IUser extends Document {
+  _id: any;
   name: string,
   email: string,
   dob: Date,
@@ -63,5 +64,13 @@ export interface IChatRoomMessage extends Document {
   user_id:ObjectId;
   type:'text' | 'media';
   organization_id:ObjectId;
+  deleted_at:Date;
+}
+
+
+export interface IBlockedUser extends Document {
+  blocked_by_id: ObjectId;
+  user_id: ObjectId;
+  room_id:ObjectId;
   deleted_at:Date;
 }

@@ -14,7 +14,7 @@ interface SecuritySchemeObject {
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'Royo-chat',
+    title: 'Chat',
     version: '1.0.0',
     description: 'This is chating App Api',
   },

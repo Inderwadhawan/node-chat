@@ -53,7 +53,7 @@ export const socketHandler = (io: SocketIOServer) => {
   io.on('connection', async (socket: Socket) => {
     const userMobile = socket.handshake.auth.mobile;
     const organizationCode = socket.handshake.auth.code;
-    console.log('Socket connected userMobile :', userMobile);
+    // console.log('Socket connected userMobile :', userMobile);
 
     // Join user to all rooms during socket connection
     const userRooms = await fetchUserRooms(userMobile, organizationCode);
@@ -61,14 +61,20 @@ export const socketHandler = (io: SocketIOServer) => {
     if (userRooms && userRooms.length > 0) {
       userRooms.forEach((roomId: string) => {
         socket.join(roomId); // Join each room the user belongs to
-        console.log(`User joined room: ${roomId}`);
+        // console.log(`User joined room: ${roomId}`);
       });
     }
+
+
 
     // Handle disconnection
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
     });
+
+
+
+
 
     // When a user joins a room
     socket.on('joinRoom', async (data: any) => {
@@ -79,12 +85,18 @@ export const socketHandler = (io: SocketIOServer) => {
 
       const fakeRes = createMockResponse();
       const msg = await chatController.fetchChatMessages(fakeReq, fakeRes);
+      const block = await chatController.checkBlockRoom(fakeReq, fakeRes);
       let userData = {
         msg : msg,
-        mobile : data.mobile
+        mobile : data.mobile,
+        block : block
       }
       io.to(data.room).emit('allChatMessage', userData); // Emit to the room only
     });
+
+
+
+
 
     // Handle receiving and broadcasting chat messages
     socket.on('sendMessage', async (msg: any) => {
@@ -99,6 +111,9 @@ export const socketHandler = (io: SocketIOServer) => {
       }
     });
 
+
+
+
     // Handle create room event
     socket.on('createRoom', async (msg: any) => {
       try {
@@ -106,7 +121,6 @@ export const socketHandler = (io: SocketIOServer) => {
         await OrganizationSave(fakeReq, msg.code);
         const fakeRes = createMockResponse();
         let roomid : any = await chatController.createRoom(fakeReq, fakeRes);
-        // console.log('roomid');
         socket.join(roomid); // Join each room the user belongs to
         // console.log('roomid call io emit ');
         io.to(roomid).emit('receiveNewRoomId', roomid); // Emit to the room only
@@ -115,8 +129,38 @@ export const socketHandler = (io: SocketIOServer) => {
         console.error('Error handling createRoom message:', error);
       }
     });
+
+
+
+
+     // Handle block user room event
+     socket.on('blockUser', async (msg: any) => {
+      try {
+        let rmId = msg.room;
+        const fakeReq = createSocketRequest2(msg) as Request;
+        await OrganizationSave(fakeReq, msg.code);
+        const fakeRes = createMockResponse();
+        let data : any = await chatController.blockUser(fakeReq, fakeRes);
+
+        let dataRes = {
+          data : data,
+          room : msg.room,
+          mobile : msg.mobile
+        }
+        io.to(rmId).emit('userBlocked', dataRes); // Emit to the room only
+
+      } catch (error) {
+        console.error('Error handling user block message:', error);
+      }
+    });
+
+
+
+
   });
 };
+
+
 
 // Function to find the organization and attach it to the request object
 const OrganizationSave = async (req: Request, code: string) => {
@@ -131,6 +175,8 @@ const OrganizationSave = async (req: Request, code: string) => {
     console.error('Error fetching organization:', error);
   }
 };
+
+
 
 // Function to fetch all rooms the user belongs to
 const fetchUserRooms = async (mobile: string, code: string) => {
