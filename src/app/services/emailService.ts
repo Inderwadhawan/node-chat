@@ -31,7 +31,7 @@ const sendOtpEmail = async (email: string, otp: number): Promise<boolean> => {
         }else{
 
           var  text:string = `Your OTP code is ${otp}. It is valid for 10 minutes.`;
-          await addEmailToQueue(email, 'portl-fitness Otp', text);
+          await addEmailToQueue(email, 'Otp', text);
           console.log('email send queued ',process.env.EMAIL_QUEUE)
 
         }

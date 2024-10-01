@@ -10,7 +10,7 @@ class Authentication {
   private SECRET_KEY: string;
 
   constructor() {
-    this.SECRET_KEY = process.env.JWT_SECRETKEY || 'jwt-fitness-portl';
+    this.SECRET_KEY = process.env.JWT_SECRETKEY || 'jwt-getmed-chat';
   }
 
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
