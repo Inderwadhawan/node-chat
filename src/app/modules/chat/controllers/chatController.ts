@@ -170,6 +170,15 @@ fetchRooms = async (req: Request, res: Response) => {
     fetchChatMessages = async (req: Request, res: Response) => {
     try {
       const { room,mobile } = req?.params??req.body; // Assuming room_id is passed as a URL parameter
+
+      // Find the chat room by its ID
+      const chatRoom = await ChatRoom.findById(room);
+
+      if (!chatRoom) {
+        console.log('Chat room not found');
+        return null;
+      }
+
     // Fetch messages for the specified room and populate user and room details
     const messages = await ChatRoomMessages.find({ room_id: room })
         .sort({ _id: -1 })
@@ -197,10 +206,21 @@ fetchRooms = async (req: Request, res: Response) => {
           blockData = 0;
         }
 
+        // Extract user IDs from the chat room
+        const userIds = chatRoom.user_ids;
+
+        // Find users by their IDs and select only the mobile number field
+        const usersmbs = await User.find({ _id: { $in: userIds } }, 'mobile');
+
+        // Map the users to get an array of mobile numbers
+        const mobileNumbers = usersmbs.map(user => user.mobile);
+
+
         let data = {
           msg : messages,
           user : user,
-          block : blockData
+          block : blockData,
+          mobileNumbers : mobileNumbers
         }
         return data;
 
