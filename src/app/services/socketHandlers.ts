@@ -50,6 +50,9 @@ const createMockResponse = (): Response => {
 
 export const socketHandler = (io: SocketIOServer) => {
 
+  // Object to store the online status of users
+  const onlineUsers: { [key: string]: string } = {};
+
   io.on('connection', async (socket: Socket) => {
     const userMobile = socket.handshake.auth.mobile;
     const organizationCode = socket.handshake.auth.code;
@@ -57,11 +60,19 @@ export const socketHandler = (io: SocketIOServer) => {
 
     // Join user to all rooms during socket connection
     const userRooms = await fetchUserRooms(userMobile, organizationCode);
+
+    // Mark the user as online
+    onlineUsers[userMobile] = socket.id;
+    
+    // Notify other users in the room that this user is online
     
     if (userRooms && userRooms.length > 0) {
       userRooms.forEach((roomId: string) => {
         socket.join(roomId); // Join each room the user belongs to
         // console.log(`User joined room: ${roomId}`);
+
+        socket.to(roomId).emit('userOnline', { userMobile });
+
       });
     }
 
@@ -79,6 +90,11 @@ export const socketHandler = (io: SocketIOServer) => {
     // When a user joins a room
     socket.on('joinRoom', async (data: any) => {
       socket.join(data.room); // Join the specified room
+    //   var userMobile = data.mobile;
+    //       // Mark the user as online
+    // onlineUsers[userMobile] = socket.id;
+    // socket.to(data.room).emit('userOnline', { userMobile });
+
 
       const fakeReq = createSocketRequest2(data) as Request;
       await OrganizationSave(fakeReq, data.code);
@@ -91,7 +107,12 @@ export const socketHandler = (io: SocketIOServer) => {
         mobile : data.mobile,
         block : block
       }
-      io.to(data.room).emit('allChatMessage', userData); // Emit to the room only
+      // Send the room messages back ONLY to the user who joined the room (not all users in the room)
+      socket.emit('allChatMessage', userData); 
+      
+      // Emit to the room for all users 
+      // io.to(data.room).emit('allChatMessage', userData); 
+
     });
 
 
@@ -105,7 +126,7 @@ export const socketHandler = (io: SocketIOServer) => {
         await OrganizationSave(fakeReq, msg.code);
         const fakeRes = createMockResponse();
         await chatController.sendRoomMessage(fakeReq, fakeRes);
-        io.to(msg.room_id).emit('receiveNewMessage', msg); // Emit to the room only
+        socket.to(msg.room_id).emit('receiveNewMessage', msg); // Emit to the room only
       } catch (error) {
         console.error('Error handling socket message:', error);
       }
