@@ -14,8 +14,6 @@ if(process.env.APP_ENVIRONMENT=='Dev')
     var mongoUri = `mongodb://${username}:${password}@${host}/${dbName}`;
   }
 
-console.log('mongoUri');
-console.log(mongoUri);
 export const connectDB = async () => {
   try {
     await mongoose.connect(mongoUri);

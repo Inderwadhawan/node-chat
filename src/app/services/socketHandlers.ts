@@ -156,6 +156,22 @@ export const socketHandler = (io: SocketIOServer) => {
 
 
 
+  // Handle typing event
+  socket.on('typing', (data) => {
+    const { roomId } = data;
+    // Broadcast to everyone in the room except the sender
+    socket.to(roomId).emit('userTyping', { username: 'User' });
+  });
+
+  // Handle stop typing event
+  socket.on('stopTyping', (data) => {
+    const { roomId } = data;
+    // Broadcast to everyone in the room except the sender
+    socket.to(roomId).emit('userStopTyping');
+  });
+
+
+
 
   });
 };
@@ -175,6 +191,8 @@ const OrganizationSave = async (req: Request, code: string) => {
     console.error('Error fetching organization:', error);
   }
 };
+
+
 
 
 
