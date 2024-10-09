@@ -94,6 +94,7 @@ const userSchema = new Schema<IUser>({
     type:String,
     required: true
   },
+  organization_id: { type: Schema.Types.ObjectId, ref: 'organizations', required: true },
   userBio:{type:String,required:false},
   termCondition:{type:Number,enum:Object.values([0,1]),default:0}
 },

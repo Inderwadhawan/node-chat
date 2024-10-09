@@ -48,6 +48,7 @@ export interface IOrganization extends Document {
 
 export interface IChatRoom extends Document {
   name: string;
+  jobId: string;
   status: string;
   image: string;
   user_ids:ObjectId;
@@ -63,6 +64,7 @@ export interface IChatRoomMessage extends Document {
   room_id:ObjectId;
   user_id:ObjectId;
   type:'text' | 'media';
+  is_read: Boolean,
   organization_id:ObjectId;
   deleted_at:Date;
 }

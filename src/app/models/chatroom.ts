@@ -5,6 +5,7 @@ import { IChatRoom } from '../interfaces';
 const ChatRoom = new Schema<IChatRoom>(
   {
     name: { type: String, required: true },
+    jobId: { type: String },
     type: { type: String, required: true },
     image: { type: String },
     user_ids: [{ type: Schema.Types.ObjectId, ref: 'users'}], // Reference to the user

@@ -105,7 +105,8 @@ export const socketHandler = (io: SocketIOServer) => {
       let userData = {
         msg : msg,
         mobile : data.mobile,
-        block : block
+        block : block,
+        roomId : data.room
       }
       // Send the room messages back ONLY to the user who joined the room (not all users in the room)
       socket.emit('allChatMessage', userData); 
@@ -113,6 +114,21 @@ export const socketHandler = (io: SocketIOServer) => {
       // Emit to the room for all users 
       // io.to(data.room).emit('allChatMessage', userData); 
 
+    });
+
+
+    socket.on('markAsRead', async (msg: any) => {
+      try {
+
+        const fakeReq = createSocketRequest2(msg) as Request;
+        await OrganizationSave(fakeReq, msg.code);
+        const fakeRes = createMockResponse();
+        const read = await chatController.markAsRead(fakeReq, fakeRes);
+      
+        socket.to(msg.room).emit('updateReadStatus', { read : read });
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
     });
 
 

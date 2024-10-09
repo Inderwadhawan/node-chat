@@ -7,6 +7,7 @@ import  bcrypt from 'bcrypt';
 import {makeUsername} from '../../../services/common_functions'
 import mongoose, { ObjectId } from 'mongoose';
 import blockedUsers from '../../../models/blockedusers';
+import chatRoomMessage from '../../../models/chatroommessage';
 
 dotenv.config();
 
@@ -58,7 +59,7 @@ export class ChatController {
 
         for (let member of members) {
           // Check if the user exists based on email
-          let user = await User.findOne({ mobile: member.mobile });
+          let user = await User.findOne({ mobile: member.mobile,organization_id: req.organization.id });
     
           if (!user) {
             // Create the user if they do not exist
@@ -66,9 +67,11 @@ export class ChatController {
               name: member.name,
               email: member.email,
               mobile: member.mobile,
+              image: member.image,
               role:member.role??'USER',
               password: await bcrypt.hash('123456', 10),
               otp: 0,
+              organization_id: req.organization.id,
               userName: await makeUsername(member?.email??member.mobile),
             });
     
@@ -86,7 +89,8 @@ export class ChatController {
             $set: {
                 type: room.type,
                 user_ids: userIds,
-                image:room.image
+                image:room.image,
+                jobId:room.jobId
             },
             },
             { new: true, upsert: true, setDefaultsOnInsert: true } // Create or update the chat room
@@ -109,7 +113,7 @@ fetchRooms = async (req: Request, res: Response) => {
     const { mobile } = req?.params ?? req.body; // Assuming mobile is passed as a URL parameter
 
     // Find the user by mobile number
-    const user = await User.findOne({ mobile: mobile });
+    const user = await User.findOne({ mobile: mobile ,organization_id: req.organization.id});
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -135,19 +139,31 @@ fetchRooms = async (req: Request, res: Response) => {
           : [];
 
         // Fetch the other users' details
-        const otherUsers = await User.find({ _id: { $in: otherUserIds } }, 'name email');
-
+        const otherUsers = await User.find({ _id: { $in: otherUserIds } }, 'id name email image mobile');
+        
         // Personalize the room name
         let roomName = 'Chat Room'; // Default name
+        let roomImage = room.image;
+        let otherUserMobile = otherUsers[0].mobile;
         if (otherUsers.length === 1) {
           roomName = otherUsers[0].name; // If it's a one-on-one chat, use the other user's name
-        } else if (otherUsers.length > 1) {
-          roomName = otherUsers.map(user => user.name).join(', '); // For group chats, show multiple names
+          roomImage = otherUsers[0].image; // If it's a one-on-one chat, use the other user's name
         }
+        //  else if (otherUsers.length > 1) {
+        //   roomName = otherUsers.map(user => user.name).join(', '); // For group chats, show multiple names
+        //   roomImage = otherUsers.map(user => user.image).join(', '); // For group chats, show multiple names
+        // }
+
+        const unreadMessagesCount = await ChatRoomMessages.countDocuments({
+          is_read: false,  // Only messages that are not read
+          room_id: room._id,
+          user_id: { $ne: user._id } // Exclude messages sent by the user
+        });
+
 
         return {
-          room: { ...room.toObject(), roomName }, // Add personalized room name
-          latest_message: latestMessage,
+          room: { ...room.toObject(), roomName, roomImage , otherUserMobile , unreadMessagesCount}, // Add personalized room name
+          latest_message: latestMessage
         };
       })
     );
@@ -182,7 +198,7 @@ fetchRooms = async (req: Request, res: Response) => {
     // Fetch messages for the specified room and populate user and room details
     const messages = await ChatRoomMessages.find({ room_id: room })
         .sort({ _id: -1 })
-        .limit(50) // Limit to the last 50 messages
+        // .limit(200) // Limit to the last 50 messages
         .populate({
         path: 'user_id',
         select: 'id name email role mobile ' // Specify fields to include from User
@@ -335,6 +351,31 @@ fetchRooms = async (req: Request, res: Response) => {
             return 0;
           }
       }
+
+      markAsRead = async (req: Request | any, res: Response) => {
+        try {
+         
+          let { room,mobile } = req.body;
+
+          let user_id = await User.findOne({ mobile: mobile });          
+
+          if (!user_id) {
+              return res.status(404).json({ message: 'User not found' });
+          }
+          user_id = user_id._id;
+
+            await chatRoomMessage.updateMany(
+              { room_id: room, user_id: { $ne: user_id }, is_read: false },
+              { $set: { is_read: true } }
+            );
+            return user_id;
+
+            }
+            catch (error) {
+              console.log(error);
+              return 0;
+            }
+        }
 
 }
 export const chatController = new ChatController();
