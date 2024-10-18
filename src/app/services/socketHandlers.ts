@@ -197,7 +197,7 @@ export const socketHandler = (io: SocketIOServer) => {
   socket.on('typing', (data) => {
     const { roomId } = data;
     // Broadcast to everyone in the room except the sender
-    socket.to(roomId).emit('userTyping', { username: 'User' });
+    socket.to(roomId).emit('userTyping', { username: 'User','room':roomId });
   });
 
   // Handle stop typing event
