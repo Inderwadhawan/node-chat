@@ -159,7 +159,7 @@ export const socketHandler = (io: SocketIOServer) => {
         const fakeRes = createMockResponse();
         let roomid : any = await chatController.createRoom(fakeReq, fakeRes);
         socket.join(roomid); // Join each room the user belongs to
-        console.log('roomid call io emit ----',roomid);
+        // console.log('roomid call io emit ----',roomid);
         io.to(roomid).emit('receiveNewRoomId', roomid); // Emit to the room only
 
       } catch (error) {
