@@ -19,14 +19,14 @@ const userSchema = new Schema<IUser>({
   },
   email: {
     type: String,
-    unique: true,
+    // unique: true,
     required: false,
     trim: true,
     lowercase: true,
   },
   mobile: {
     type: String,
-    unique: true,
+    // unique: true,
     trim: true,
     required: false,
   },
